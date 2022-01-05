@@ -284,11 +284,11 @@ static bool clap_init(const char* pluginPath)
   gPluginDesc->clap_version = CLAP_VERSION;
   
 #if PLUG_TYPE==0
-  gPluginDesc->plugin_type = CLAP_PLUGIN_AUDIO_EFFECT;
+  gPluginDesc->features = "audio_effect";
 #elif PLUG_TYPE==1
-  gPluginDesc->plugin_type = CLAP_PLUGIN_INSTRUMENT;
+  gPluginDesc->features = "instrument";
 #elif PLUG_TYPE==2
-  gPluginDesc->plugin_type = CLAP_PLUGIN_EVENT_EFFECT;
+  gPluginDesc->features = "note_effect";
 #endif
   
   //  clap_version clap_version; // initialized to CLAP_VERSION
@@ -303,7 +303,9 @@ static bool clap_init(const char* pluginPath)
   gPluginDesc->manual_url = "";
   gPluginDesc->support_url = "";
   gPluginDesc->description = "";
-  gPluginDesc->keywords = "";
+  
+  // TODO - more to add here
+  //gPluginDesc->features = "";
 
   return true;
 }
