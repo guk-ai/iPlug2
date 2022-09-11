@@ -250,9 +250,6 @@ clap_process_status IPlugCLAP::process(const clap_process *process) noexcept
   }
 #endif
   
-  for (uint32_t i = 0; i < process->audio_outputs_count; i++)
-    nIns += static_cast<int>(process->audio_outputs->channel_count);
-
   SetChannelConnections(ERoute::kInput, 0, MaxNChannels(ERoute::kInput), false);
   SetChannelConnections(ERoute::kInput, 0, nIns, true);
 
