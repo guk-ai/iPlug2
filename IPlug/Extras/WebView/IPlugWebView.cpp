@@ -10,12 +10,18 @@ See LICENSE.txt for  more info.
 
 #include "IPlugWebView.h"
 #include "IPlugPaths.h"
+#include "IPlugLogger.h"
 #include <string>
 #include <windows.h>
 #include <cassert>
+#include <shlobj_core.h>
+#include "gui\choc_WebView.h"
+
 
 using namespace iplug;
 using namespace Microsoft::WRL;
+
+static choc::ui::WebViewDLL webviewDLL = CHOC_FIND_WEBVIEW2LOADER_DLL;
 
 IWebView::IWebView(bool opaque)
 {
@@ -41,18 +47,13 @@ void* IWebView::OpenWebView(void* pParent, float x, float y, float w, float h, f
   w *= scale;
   h *= scale;
 
-  assert(mDLLPath.GetLength() > 0);
-
-  mDLLHandle = LoadLibraryA(mDLLPath.Get());
-
-  TCCWebView2EnvWithOptions handle = (TCCWebView2EnvWithOptions) GetProcAddress(mDLLHandle, "CreateCoreWebView2EnvironmentWithOptions");
-
-  if (handle != NULL)
+  if (auto handle = (decltype(&CreateCoreWebView2EnvironmentWithOptions)) webviewDLL.findFunction("CreateCoreWebView2EnvironmentWithOptions"))
   {
+    DBGMSG("WebView temp path:%s\n", mTmpPath.Get());
     WCHAR tmpPathWide[IPLUG_WIN_MAX_WIDE_PATH];
     UTF8ToUTF16(tmpPathWide, mTmpPath.Get(), IPLUG_WIN_MAX_WIDE_PATH);
 
-    HRESULT  v = handle(nullptr, tmpPathWide, nullptr,
+    HRESULT v = handle(nullptr, tmpPathWide, nullptr,
 
       Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
         [&, hWnd, x, y, w, h](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
