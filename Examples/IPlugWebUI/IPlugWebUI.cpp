@@ -1,16 +1,18 @@
 #include "IPlugWebUI.h"
 #include "IPlug_include_in_plug_src.h"
+#include "IPlugPaths.h"
 
 IPlugWebUI::IPlugWebUI(const InstanceInfo& info)
 : Plugin(info, MakeConfig(kNumParams, kNumPresets))
 {
   GetParam(kGain)->InitGain("Gain", -70., -70, 0.);
 
-  // Hard-coded paths must be modified!
 #ifdef OS_WIN
-  SetWebViewPaths("C:\\Users\\oli\\Dev\\iPlug2\\Examples\\IPlugWebUI\\packages\\Microsoft.Web.WebView2.1.0.824-prerelease\\runtimes\\win-x64\\native\\WebView2Loader.dll", "C:\\Users\\oli\\Dev\\iPlug2\\Examples\\IPlugWebUI\\");
+  WDL_String appSupportPath;
+  AppSupportPath(appSupportPath);
+  appSupportPath.AppendFormatted(MAX_PATH, "\\IPlugWebUI\\WebView\\%s", GetAPIStr());
+  SetWebViewTmpPath(appSupportPath.Get());
 #endif
-
 
   mEditorInitFunc = [&]() {
 #ifdef OS_WIN

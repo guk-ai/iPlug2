@@ -50,7 +50,13 @@ IPlugOSCEditor::IPlugOSCEditor(const InstanceInfo& info)
     pGraphics->AttachControl(new IVNumberBoxControl(topRow.SubRectHorizontal(3, 2).GetPadded(-10.f), kNoParameter, [&](IControl* pCaller){
       SetReceivePort(static_cast<int>(pCaller->As<IVNumberBoxControl>()->GetRealValue()));
     }, "Receive Port", DEFAULT_STYLE, 8000, 4000, 10000));
-    
+
+  #ifdef OS_WIN
+    WDL_String tmpPath;
+    AppSupportPath(tmpPath);
+    tmpPath.AppendFormatted(MAX_PATH, "\\IPlugWebUI\\WebView\\%s", GetAPIStr());
+  #endif
+
     pGraphics->AttachControl(new IVKnobControl(b.GetCentredInside(100), [&](IControl* pCaller) {
                                                 OscMessageWrite msg;
                                                 msg.PushWord("gain");
@@ -58,9 +64,8 @@ IPlugOSCEditor::IPlugOSCEditor(const InstanceInfo& info)
                                                 SendOSCMessage(msg);}
                                                , "Gain"), kCtrlTagGain);
     
-    pGraphics->AttachControl(new IWebViewControl(bottomRow, true, [](IWebViewControl* pWebView){
-      pWebView->LoadHTML("OSC Console");
-      }, nullptr, R"(C:\Users\oli\Dev\iPlug2\Examples\IPlugOSCEditor\packages\Microsoft.Web.WebView2.0.9.538\build\x64\WebView2Loader.dll)", R"(C:\Users\oli\Dev\iPlug2\Examples\IPlugOSCEditor\)"), kCtrlTagWebView);
+    pGraphics->AttachControl(new IWebViewControl(bottomRow, true, [](IWebViewControl* pWebView){ pWebView->LoadHTML("OSC Console"); }, nullptr, tmpPath.Get()),
+                             kCtrlTagWebView);
     
   };
 #endif
