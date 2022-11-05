@@ -107,6 +107,7 @@ void IPlugVST3ProcessorBase::ProcessMidiIn(IEventList* pEventList, IPlugQueue<IM
           {
             ISysEx syx = ISysEx(event.sampleOffset, event.data.bytes, event.data.size);
             ProcessSysEx(syx);
+            // TODO - push to GUI
             break;
           }
         }
