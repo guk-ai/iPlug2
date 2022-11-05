@@ -297,14 +297,14 @@
 #endif
 
 std::string gPluginPath;
-clap_plugin_descriptor* gPluginDesc = nullptr;
+std::unique_ptr<clap_plugin_descriptor> gPluginDesc;
 
 static bool clap_init(const char* pluginPath)
 {
   // Init globals
   
   gPluginPath = pluginPath;
-  gPluginDesc = new clap_plugin_descriptor();
+  gPluginDesc = std::unique_ptr<clap_plugin_descriptor>(new clap_plugin_descriptor());
   
   // Init the descriptor
   
@@ -329,7 +329,7 @@ static bool clap_init(const char* pluginPath)
 static void clap_deinit(void)
 {
   gPluginPath.clear();
-  delete gPluginDesc;
+  gPluginDesc = nullptr;
 }
 
 static uint32_t clap_get_plugin_count(const clap_plugin_factory_t *factory)
@@ -340,7 +340,7 @@ static uint32_t clap_get_plugin_count(const clap_plugin_factory_t *factory)
 static const clap_plugin_descriptor* clap_get_plugin_descriptor(const clap_plugin_factory_t *factory, uint32_t index)
 {
   if (!index)
-    return gPluginDesc;
+    return gPluginDesc.get();
   
   return nullptr;
 }
@@ -349,7 +349,7 @@ static const clap_plugin* clap_create_plugin(const clap_plugin_factory_t *factor
 {
   if (!strcmp(gPluginDesc->id, plugin_id))
   {
-    IPlugCLAP* pPlug = MakePlug(InstanceInfo{gPluginDesc, host});
+    IPlugCLAP* pPlug = MakePlug(InstanceInfo{gPluginDesc.get(), host});
     return pPlug->clapPlugin();
   }
   
