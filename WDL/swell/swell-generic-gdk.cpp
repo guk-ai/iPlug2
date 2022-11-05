@@ -611,7 +611,9 @@ void swell_oswindow_manage(HWND hwnd, bool wantfocus)
         attr.wmclass_name = (gchar*)appname;
         attr.wmclass_class = (gchar*)appname;
         attr.window_type = GDK_WINDOW_TOPLEVEL;
-        hwnd->m_oswindow = gdk_window_new(NULL,&attr,GDK_WA_X|GDK_WA_Y|(appname?GDK_WA_WMCLASS:0));
+        if (GetProp(hwnd,"SWELLGdkAlphaChannel"))
+          attr.visual = gdk_screen_get_rgba_visual(gdk_screen_get_default());
+        hwnd->m_oswindow = gdk_window_new(NULL,&attr,GDK_WA_X|GDK_WA_Y|(appname?GDK_WA_WMCLASS:0)|(attr.visual ? GDK_WA_VISUAL : 0));
  
         if (hwnd->m_oswindow) 
         {
@@ -803,61 +805,7 @@ static guint swell_gdkConvertKey(guint key, bool *extended)
   return 0;
 }
 
-static LRESULT SendMouseMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-  if (!hwnd || !hwnd->m_wndproc) return -1;
-  if (!IsWindowEnabled(hwnd)) 
-  {
-    if (msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN || msg == WM_MBUTTONDOWN ||
-        msg == WM_LBUTTONDBLCLK || msg == WM_RBUTTONDBLCLK || msg == WM_MBUTTONDBLCLK)
-    {
-      HWND h = DialogBoxIsActive();
-      if (h) SetForegroundWindow(h);
-    }
-    return -1;
-  }
-
-  LRESULT htc=0;
-  if (msg != WM_MOUSEWHEEL && !GetCapture())
-  {
-    DWORD p=GetMessagePos(); 
-
-    htc=hwnd->m_wndproc(hwnd,WM_NCHITTEST,0,p); 
-    if (hwnd->m_hashaddestroy||!hwnd->m_wndproc) 
-    {
-      return -1; // if somehow WM_NCHITTEST destroyed us, bail
-    }
-     
-    if (htc!=HTCLIENT || swell_window_wants_all_input() == hwnd)
-    { 
-      if (msg==WM_MOUSEMOVE) return hwnd->m_wndproc(hwnd,WM_NCMOUSEMOVE,htc,p); 
-//      if (msg==WM_MOUSEWHEEL) return hwnd->m_wndproc(hwnd,WM_NCMOUSEWHEEL,htc,p); 
-//      if (msg==WM_MOUSEHWHEEL) return hwnd->m_wndproc(hwnd,WM_NCMOUSEHWHEEL,htc,p); 
-      if (msg==WM_LBUTTONUP) return hwnd->m_wndproc(hwnd,WM_NCLBUTTONUP,htc,p); 
-      if (msg==WM_LBUTTONDOWN) return hwnd->m_wndproc(hwnd,WM_NCLBUTTONDOWN,htc,p); 
-      if (msg==WM_LBUTTONDBLCLK) return hwnd->m_wndproc(hwnd,WM_NCLBUTTONDBLCLK,htc,p); 
-      if (msg==WM_RBUTTONUP) return hwnd->m_wndproc(hwnd,WM_NCRBUTTONUP,htc,p); 
-      if (msg==WM_RBUTTONDOWN) return hwnd->m_wndproc(hwnd,WM_NCRBUTTONDOWN,htc,p); 
-      if (msg==WM_RBUTTONDBLCLK) return hwnd->m_wndproc(hwnd,WM_NCRBUTTONDBLCLK,htc,p); 
-      if (msg==WM_MBUTTONUP) return hwnd->m_wndproc(hwnd,WM_NCMBUTTONUP,htc,p); 
-      if (msg==WM_MBUTTONDOWN) return hwnd->m_wndproc(hwnd,WM_NCMBUTTONDOWN,htc,p); 
-      if (msg==WM_MBUTTONDBLCLK) return hwnd->m_wndproc(hwnd,WM_NCMBUTTONDBLCLK,htc,p); 
-    } 
-  }
-
-
-  LRESULT ret=hwnd->m_wndproc(hwnd,msg,wParam,lParam);
-
-  if (msg==WM_LBUTTONUP || msg==WM_RBUTTONUP || msg==WM_MOUSEMOVE || msg==WM_MBUTTONUP) 
-  {
-    if (!GetCapture() && (hwnd->m_hashaddestroy || !hwnd->m_wndproc || !hwnd->m_wndproc(hwnd,WM_SETCURSOR,(WPARAM)hwnd,htc | (msg<<16))))    
-    {
-      SetCursor(SWELL_LoadCursor(IDC_ARROW));
-    }
-  }
-
-  return ret;
-}
+LRESULT SWELL_SendMouseMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 static int hex_parse(char c)
 {
@@ -1124,6 +1072,10 @@ static void OnKeyEvent(GdkEventKey *k)
       swell_is_likely_capslock = (modifiers&FSHIFT)==0;
       modifiers |= FVIRTKEY;
     }
+    else if (kv == ' ')
+    {
+      kv = VK_SPACE;
+    }
     else if (kv >= '0' && kv <= '9')
     {
       modifiers |= FVIRTKEY;
@@ -1190,7 +1142,7 @@ static void OnMotionEvent(GdkEventMotion *m)
     POINT p2={(int)m->x_root, (int)m->y_root};
     ScreenToClient(hwnd, &p2);
     if (hwnd) hwnd->Retain();
-    SendMouseMessage(hwnd, WM_MOUSEMOVE, 0, MAKELPARAM(p2.x, p2.y));
+    SWELL_SendMouseMessage(hwnd, WM_MOUSEMOVE, 0, MAKELPARAM(p2.x, p2.y));
     if (hwnd) hwnd->Release();
   }
 }
@@ -1214,7 +1166,7 @@ static void OnScrollEvent(GdkEventScroll *b)
       int v = (b->direction == GDK_SCROLL_UP || b->direction == GDK_SCROLL_LEFT) ? 120 : -120;
 
       if (hwnd) hwnd->Retain();
-      SendMouseMessage(hwnd, msg, (v<<16), MAKELPARAM(p2.x, p2.y));
+      SWELL_SendMouseMessage(hwnd, msg, (v<<16), MAKELPARAM(p2.x, p2.y));
       if (hwnd) hwnd->Release();
     }
   }
@@ -1279,11 +1231,24 @@ static void OnButtonEvent(GdkEventButton *b)
   else if(b->type == GDK_2BUTTON_PRESS) 
   {
     msg++; // convert WM_xBUTTONDOWN to WM_xBUTTONUP
-    SendMouseMessage(hwnd2, msg, 0, MAKELPARAM(p2.x, p2.y));
+    SWELL_SendMouseMessage(hwnd2, msg, 0, MAKELPARAM(p2.x, p2.y));
+
+    // if capture was released by WM_LBUTTONUP, allow the DBLCLICK to go to the correct window
+    HWND hwnd3 = getMouseTarget(b->window,p,&hwnd);
+    if (hwnd3 != hwnd2)
+    {
+      if (hwnd2) hwnd2->Release();
+      hwnd2 = hwnd3;
+      if (hwnd2) hwnd2->Retain();
+      p2.x = (int)b->x_root;
+      p2.y = (int)b->y_root;
+      ScreenToClient(hwnd2, &p2);
+    }
+
     msg++; // convert WM_xBUTTONUP to WM_xBUTTONDBLCLK
   }
 
-  SendMouseMessage(hwnd2, msg, 0, MAKELPARAM(p2.x, p2.y));
+  SWELL_SendMouseMessage(hwnd2, msg, 0, MAKELPARAM(p2.x, p2.y));
   if (hwnd2) hwnd2->Release();
 }
 
@@ -2386,7 +2351,10 @@ HWND SWELL_CreateXBridgeWindow(HWND viewpar, void **wref, const RECT *r)
   }
 
   Display *disp = gdk_x11_display_get_xdisplay(gdk_window_get_display(ospar));
-  Window w = XCreateWindow(disp,GDK_WINDOW_XID(ospar),0,0,r->right-r->left,r->bottom-r->top,0,CopyFromParent, InputOutput, CopyFromParent, 0, NULL);
+  Window w = XCreateWindow(disp,GDK_WINDOW_XID(ospar),0,0,
+      wdl_max(r->right-r->left,1),
+      wdl_max(r->bottom-r->top,1),
+      0,CopyFromParent, InputOutput, CopyFromParent, 0, NULL);
   GdkWindow *gdkw = w ? gdk_x11_window_foreign_new_for_display(gdk_display_get_default(),w) : NULL;
 
   hwnd = new HWND__(viewpar,0,r,NULL, true, xbridgeProc);
@@ -2955,6 +2923,16 @@ bool SWELL_SetGLContextToView(HWND h)
   return true;
 }
 
+void *SWELL_GetOSWindow(HWND hwnd, const char *type)
+{
+  if (hwnd && !strcmp(type,"GdkWindow")) return hwnd->m_oswindow;
+  return NULL;
+}
+
+void *SWELL_GetOSEvent(const char *type)
+{
+  return !strcmp(type,"GdkEvent") ? s_cur_evt : NULL;
+}
 
 
 #endif

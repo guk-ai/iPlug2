@@ -145,6 +145,7 @@ typedef struct WindowPropRec
   bool m_last_dark_mode;
   bool m_ctlcolor_set;
   bool m_disable_menu;
+  LONG_PTR m_userdata;
 }
 - (id) init;
 - (void)setNeedsDisplay:(BOOL)flag;
@@ -153,6 +154,8 @@ typedef struct WindowPropRec
 - (void)initColors:(int)darkmode; // -1 to not update darkmode but trigger update of colors
 - (void)swellDisableContextMenu:(bool)dis;
 - (NSMenu *)textView:(NSTextView *)view menu:(NSMenu *)menu forEvent:(NSEvent *)event atIndex:(NSUInteger)charIndex;
+-(LONG_PTR)getSwellUserData;
+-(void)setSwellUserData:(LONG_PTR)val;
 @end
 
 @interface SWELL_TabView : NSTabView
@@ -1256,7 +1259,9 @@ static void __listview_mergesort_internal(void *base, size_t nmemb, size_t size,
   f(listview_bg, RGB(255,255,255)) \
   f(listview_bg_sel, RGB(128,128, 255)) \
   f(listview_text, RGB(0,0,0)) \
-  fd(listview_text_sel, RGB(0,0,0), listview_text) \
+  fd(listview_text_sel, RGB(255,255,255), listview_text) \
+  fd(listview_bg_sel_inactive, RGB(200,200,200), listview_bg_sel) \
+  fd(listview_text_sel_inactive, RGB(0,0,0), listview_text_sel) \
   fd(listview_grid, RGB(224,224,224), _3dhilight) \
   f(listview_hdr_arrow,RGB(96,96,96)) \
   fd(listview_shadow, RGB(96,96,96), _3dshadow) \
@@ -1268,7 +1273,9 @@ static void __listview_mergesort_internal(void *base, size_t nmemb, size_t size,
   f(treeview_text,RGB( 0,0,0)) \
   f(treeview_bg, RGB(255,255,255)) \
   f(treeview_bg_sel, RGB(128,128,255)) \
-  f(treeview_text_sel, RGB(0,0,0)) \
+  f(treeview_text_sel, RGB(255,255,255)) \
+  fd(treeview_bg_sel_inactive, RGB(200,200,200), treeview_bg_sel) \
+  fd(treeview_text_sel_inactive, RGB(0,0,0), treeview_text_sel) \
   f(treeview_arrow, RGB(96,96,96)) \
   fd(treeview_shadow, RGB(96,96,96), _3dshadow) \
   fd(treeview_hilight, RGB(224,224,224), _3dhilight) \

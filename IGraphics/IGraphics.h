@@ -836,23 +836,26 @@ public:
   /** Call this if you modify control tool tips at runtime. \todo explain */
   virtual void UpdateTooltips() = 0;
 
-  /** Pop up a modal platform message box dialog. NOTE: this method will block the main thread
+  /** Pop up a modal platform message box dialog.
    * @param str The text message to display in the dialogue
-   * @param caption The title of the message box window \todo check
+   * @param caption The title of the message box window
    * @param type EMsgBoxType describing the button options available \see EMsgBoxType
-   * @return \todo check */
-  virtual EMsgBoxResult ShowMessageBox(const char* str, const char* caption, EMsgBoxType type, IMsgBoxCompletionHanderFunc completionHandler = nullptr) = 0;
+   * @param completionHanlder an IMsgBoxCompletionHandlerFunc that will be called when a button is pressed
+   * @return EMsgBoxResult signifying which button was pressed */
+  virtual EMsgBoxResult ShowMessageBox(const char* str, const char* caption, EMsgBoxType type, IMsgBoxCompletionHandlerFunc completionHandler = nullptr) = 0;
 
-  /** Create a platform file prompt dialog to choose a file/directory path for opening/saving a file/directory. NOTE: this method will block the main thread
-   * @param fileName Non const WDL_String reference specifying the file name. Set this prior to calling the method for save dialogs, to provide a default file name. For load dialogs, on successful selection of a file this will get set to the file’s name.
+  /** Create a platform file prompt dialog to choose a path for opening/saving a single file. NOTE: this method will block the main thread on macOS, unless you speficy the completionHander, which will be called asynchronously when the dialog button is pressed. On iOS, you must supply a completionHander.
+   * @param fileName Non const WDL_String reference specifying the file name. Set this prior to calling the method for save dialogs, to provide a default file name. For file-open dialogs, on successful selection of a file this will get set to the file’s name.
    * @param path WDL_String reference where the path will be put on success or empty string on failure/user cancelled
-   * @param action Determines whether this is an open dialog or a save dialog
-   * @param extensions A comma separated CString list of file extensions to filter in the dialog (e.g. “.wav, .aif” \todo check */
-  virtual void PromptForFile(WDL_String& fileName, WDL_String& path, EFileAction action = EFileAction::Open, const char* extensions = 0) = 0;
+   * @param action Determines whether this is an file-open dialog or a file-save dialog
+   * @param extensions A space separated CString list of file extensions to filter in the dialog (e.g. “.wav .aif”
+   * @param completionHandler an IFileDialogCompletionHandlerFunc that will be called when a file is selected or the dialog is cancelled */
+  virtual void PromptForFile(WDL_String& fileName, WDL_String& path, EFileAction action = EFileAction::Open, const char* extensions = 0, IFileDialogCompletionHandlerFunc completionHandler = nullptr) = 0;
 
   /** Create a platform file prompt dialog to choose a directory path for opening/saving a directory. NOTE: this method will block the main thread
-   * @param dir Non const WDL_String reference specifying the directory path. Set this prior to calling the method for save dialogs, to provide a default path. For load dialogs, on successful selection of a directory this will get set to the full path. */
-  virtual void PromptForDirectory(WDL_String& dir) = 0;
+   * @param dir Non const WDL_String reference specifying the directory path. Set this prior to calling the method for save dialogs, to provide a default path. For load dialogs, on successful selection of a directory this will get set to the full path.
+   * @param completionHandler an IFileDialogCompletionHandlerFunc that will be called when a file is selected or the dialog is cancelled. Only the path argument will be populated. */
+  virtual void PromptForDirectory(WDL_String& dir, IFileDialogCompletionHandlerFunc completionHandler = nullptr) = 0;
 
   /** Create a platform color chooser dialog. NOTE: this method will block the main thread
    * @param color When a color is chosen the IColor referenced will be updated with the new color
@@ -942,10 +945,10 @@ protected:
   
   /** Calls the platform backend to create the platform popup menu
    * @param menu The source IPopupMenu
-   * @param bounds \todo
+   * @param bounds The rectangular area in which to create the menu
    * @param isAsync This gets set true on platforms where popupmenu creation is asyncronous
    * @return A ptr to the chosen IPopupMenu or nullptr in the case of async or dismissed menu */
-  virtual IPopupMenu* CreatePlatformPopupMenu(IPopupMenu& menu, const IRECT& bounds, bool& isAsync) = 0;
+  virtual IPopupMenu* CreatePlatformPopupMenu(IPopupMenu& menu, const IRECT bounds, bool& isAsync) = 0;
 
 #pragma mark - Base implementation
 public:
