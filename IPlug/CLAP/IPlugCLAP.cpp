@@ -701,11 +701,8 @@ bool IPlugCLAP::audioPortsGetConfig(uint32_t index, clap_audio_ports_config *con
   if (index >= audioPortsConfigCount())
     return false;
   
-  const IOConfig* ioConfig = GetIOConfig(index);
-
   WDL_String configName;
 
-  // TODO - wildcards return as -1 chans...
   // TODO - review naming or add option for names...
   
   auto getNChans = [&](ERoute direction, int bus)
@@ -719,7 +716,7 @@ bool IPlugCLAP::audioPortsGetConfig(uint32_t index, clap_audio_ports_config *con
     
     configName.AppendFormatted(CLAP_NAME_SIZE, "%d", getNChans(direction, 0));
     
-    for (int i = 0; i < ioConfig->NBuses(direction); i++)
+    for (int i = 0; i < NBuses(direction, index); i++)
       configName.AppendFormatted(CLAP_NAME_SIZE, ".%d", getNChans(direction, i));
   };
   
@@ -730,8 +727,8 @@ bool IPlugCLAP::audioPortsGetConfig(uint32_t index, clap_audio_ports_config *con
   config->id = index;
   ClapNameCopy(config->name, configName.Get());
  
-  config->input_port_count = static_cast<uint32_t>(ioConfig->NBuses(kInput));
-  config->output_port_count = static_cast<uint32_t>(ioConfig->NBuses(kOutput));
+  config->input_port_count = static_cast<uint32_t>(NBuses(kInput, index));
+  config->output_port_count = static_cast<uint32_t>(NBuses(kOutput, index));
 
   config->has_main_input = config->input_port_count > 1;
   config->main_input_channel_count = config->has_main_input ? getNChans(kInput, 0) : 0;
