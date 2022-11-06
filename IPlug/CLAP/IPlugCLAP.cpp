@@ -696,28 +696,30 @@ uint32_t IPlugCLAP::audioPortsConfigCount() const noexcept
 
 bool IPlugCLAP::audioPortsGetConfig(uint32_t index, clap_audio_ports_config *config) const noexcept
 {
+  if (index >= audioPortsConfigCount())
+    return false;
+  
   const IOConfig* ioConfig = GetIOConfig(index);
 
   WDL_String configName;
 
   // TODO - wildcards return as -1 chans...
-  // TODO - configs in iPlug have no names so we reconstruct the iplug io style strings for now...
-
-  auto getChans = [&](ERoute direction, int idx)
+  // TODO - review naming or add option for names...
+  
+  auto getNChans = [&](ERoute direction, int bus)
   {
-    return static_cast<uint32_t>(ioConfig->GetBusInfo(direction, idx)->NChans());
+    return static_cast<uint32_t>(NChannels(direction, static_cast<uint32_t>(bus), index));
   };
   
   auto getDirectionName = [&](ERoute direction)
   {
-    configName.AppendFormatted(CLAP_NAME_SIZE, "%d", getChans(kInput, 0));
+    // N.B. Configs in iPlug2 currently have no names so we reconstruct the strings...
+    
+    configName.AppendFormatted(CLAP_NAME_SIZE, "%d", getNChans(direction, 0));
     
     for (int i = 0; i < ioConfig->NBuses(direction); i++)
-      configName.AppendFormatted(CLAP_NAME_SIZE, ".%d", getChans(kInput, i));
+      configName.AppendFormatted(CLAP_NAME_SIZE, ".%d", getNChans(direction, i));
   };
-  
-  if (index >= audioPortsConfigCount())
-    return false;
   
   getDirectionName(kInput);
   configName.Append("-");
@@ -727,14 +729,14 @@ bool IPlugCLAP::audioPortsGetConfig(uint32_t index, clap_audio_ports_config *con
   ClapNameCopy(config->name, configName.Get());
  
   config->input_port_count = static_cast<uint32_t>(ioConfig->NBuses(kInput));
-  config->output_port_count = static_cast<uint32_t>(ioConfig->NBuses(kInput));
+  config->output_port_count = static_cast<uint32_t>(ioConfig->NBuses(kOutput));
 
   config->has_main_input = config->input_port_count > 1;
-  config->main_input_channel_count = config->has_main_input ? getChans(kInput, 0) : 0;
+  config->main_input_channel_count = config->has_main_input ? getNChans(kInput, 0) : 0;
   config->main_input_port_type = ClapPortType(config->main_input_channel_count);
   
-  config->has_main_input = config->output_port_count > 1;
-  config->main_output_channel_count = config->has_main_input ? getChans(kOutput, 0) : 0;
+  config->has_main_output = config->output_port_count > 1;
+  config->main_output_channel_count = config->has_main_input ? getNChans(kOutput, 0) : 0;
   config->main_output_port_type = ClapPortType(config->main_output_channel_count);
 
   return true;
