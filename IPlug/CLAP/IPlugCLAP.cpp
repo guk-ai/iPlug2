@@ -663,7 +663,7 @@ uint32_t IPlugCLAP::audioPortsCount(bool isInput) const noexcept
 
 bool IPlugCLAP::audioPortsInfo(uint32_t index, bool isInput, clap_audio_port_info *info) const noexcept
 {
-  // TODO - both sets of ids below (should we use in place pairs)
+  // TODO - should we use in place pairs?
   
   WDL_String busName;
 
