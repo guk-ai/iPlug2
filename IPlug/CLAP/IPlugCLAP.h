@@ -223,6 +223,7 @@ private:
   
   // IPlug Config Helpers
   
+  void SetDefaultConfig();
   int RequiredChannels() const;
   uint32_t NBuses(ERoute direction) const;
   uint32_t NChannels(ERoute direction, uint32_t bus) const;

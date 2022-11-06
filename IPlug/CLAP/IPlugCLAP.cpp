@@ -126,6 +126,8 @@ bool IPlugCLAP::SendSysEx(const ISysEx& msg)
 
 bool IPlugCLAP::init() noexcept
 {
+  SetDefaultConfig();
+  
   return true;
 }
 
@@ -869,7 +871,74 @@ bool IPlugCLAP::guiSetSize(uint32_t width, uint32_t height) noexcept
 #endif /* PLUG_HAS_UI */
 
 // TODO - wildcards (return as -1 chans...)
-// TODO - default config
+
+void IPlugCLAP::SetDefaultConfig()
+{
+  auto isMatch = [&](int idx, int chans)
+  {
+    if (NBuses(ERoute::kOutput, idx) >= 1 && NChannels(ERoute::kOutput, 0, idx) == chans)
+    {
+      int numBuses = NBuses(ERoute::kInput, idx);
+      
+      // Instruments are allowed to match with no inputs
+      
+      if (IsInstrument() && (numBuses == 0 || NChannels(ERoute::kInput, 0, idx) == 0))
+        return true;
+      
+      // Otherwise IO must match
+      
+      return numBuses >= 1 && NChannels(ERoute::kInput, 0, idx) == chans;
+    }
+    
+    return false;
+  };
+  
+  auto testMatches = [&](int chans)
+  {
+    bool matched = false;
+    int configNBusesI = 0;
+    int configNBusesO = 0;
+    
+    for (int i = 0; i < static_cast<int>(audioPortsConfigCount()); i++)
+    {
+      if (isMatch(i, chans))
+      {
+        const int nBusesI = NBuses(ERoute::kInput, i);
+        const int nBusesO = NBuses(ERoute::kOutput, i);
+        
+        const bool preferInput = nBusesO < configNBusesI;
+        const bool preferOutput = nBusesI < configNBusesO;
+        
+        if (!matched || preferOutput || (nBusesO == configNBusesO && preferInput))
+        {
+          matched = true;
+          mConfigIdx = i;
+          configNBusesI = NBuses(ERoute::kInput, i);
+          configNBusesO = NBuses(ERoute::kOutput, i);
+        }
+      }
+    }
+    
+    return matched;
+  };
+  
+  mConfigIdx = 0;
+  
+  // If there is track info available try to match
+  
+  if (_host.canUseTrackInfo())
+  {
+    clap_track_info info;
+    _host.trackInfoGet(&info);
+
+    if (testMatches(info.channel_count) || info.channel_count == 2)
+      return;
+  }
+  
+  // Default to stereo if nothing else has succeeded
+  
+  testMatches(2);
+}
 
 int IPlugCLAP::RequiredChannels() const
 {
