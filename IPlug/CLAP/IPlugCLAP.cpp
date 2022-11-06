@@ -875,12 +875,22 @@ int IPlugCLAP::RequiredChannels() const
   return std::max(MaxNChannels(kInput), MaxNChannels(kOutput));
 }
 
+uint32_t IPlugCLAP::NBuses(ERoute direction, int configIdx) const
+{
+  return GetIOConfig(configIdx)->NBuses(direction);
+}
+
+uint32_t IPlugCLAP::NChannels(ERoute direction, uint32_t bus, int configIdx) const
+{
+  return GetIOConfig(configIdx)->NChansOnBusSAFE(direction, static_cast<int>(bus));
+}
+
 uint32_t IPlugCLAP::NBuses(ERoute direction) const
 {
-  return mConfigIdx < 0 ? MaxNBuses(direction) : GetIOConfig(mConfigIdx)->NBuses(direction);
+  return NBuses(direction, mConfigIdx);
 }
 
 uint32_t IPlugCLAP::NChannels(ERoute direction, uint32_t bus) const
 {
-  return mConfigIdx < 0 ? MaxNChannelsForBus(direction, bus) : GetIOConfig(mConfigIdx)->NChansOnBusSAFE(direction, static_cast<int>(bus));
+  return NChannels(direction, bus, mConfigIdx);
 }

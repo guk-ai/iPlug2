@@ -226,13 +226,15 @@ private:
   int RequiredChannels() const;
   uint32_t NBuses(ERoute direction) const;
   uint32_t NChannels(ERoute direction, uint32_t bus) const;
+  uint32_t NBuses(ERoute direction, int configIdx) const;
+  uint32_t NChannels(ERoute direction, uint32_t bus, int configIdx) const;
   
   IPlugQueue<ParamToHost> mParamValuesToHost {PARAM_TRANSFER_SIZE};
   IPlugQueue<SysExData> mSysExToHost {SYSEX_TRANSFER_SIZE};
   IMidiQueue mMidiToHost;
   WDL_TypedBuf<float *> mAudioIO32;
   WDL_TypedBuf<double *> mAudioIO64;
-  int mConfigIdx = -1;
+  int mConfigIdx = 0;
   bool mTailUpdate = false;
 };
 
