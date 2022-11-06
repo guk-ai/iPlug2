@@ -16,7 +16,6 @@
 
 // TODO - respond to situations in which parameters can't be pushed (search try_push)
 // Keep in the queue or discard?? - up to us?
-// TODO - check event header flags (search header.flags)
 
 using namespace iplug;
 
