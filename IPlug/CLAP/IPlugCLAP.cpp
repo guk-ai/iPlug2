@@ -923,10 +923,10 @@ void IPlugCLAP::SetDefaultConfig()
   
   // If there is track info available try to match
   
-  if (_host.canUseTrackInfo())
+  if (GetClapHost().canUseTrackInfo())
   {
     clap_track_info info;
-    _host.trackInfoGet(&info);
+    GetClapHost().trackInfoGet(&info);
 
     if (testMatches(info.channel_count) || info.channel_count == 2)
       return;
