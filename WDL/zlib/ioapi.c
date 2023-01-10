@@ -165,6 +165,7 @@ static ZPOS64_T ZCALLBACK ftell64_file_func (voidpf opaque, voidpf stream)
 {
     (void)opaque;
     ZPOS64_T ret;
+    (void)opaque;
     ret = (ZPOS64_T)FTELLO_FUNC((FILE *)stream);
     return ret;
 }
