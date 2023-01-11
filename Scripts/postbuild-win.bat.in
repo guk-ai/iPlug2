@@ -93,7 +93,10 @@ if %PLATFORM% == "x64" (
   )
 
   if %FORMAT% == ".exe" (
-    copy /y %BUILT_BINARY% %BUILD_DIR%\%NAME%_%PLATFORM%.exe
+    echo Supposed to copy %BUILT_BINARY% to %BUILD_DIR%\%NAME%_%PLATFORM%.exe
+    echo Listing %BUILD_DIR%
+    dir %BUILD_DIR%
+    REM - copy /y %BUILT_BINARY% %BUILD_DIR%\%NAME%_%PLATFORM%.exe
   )
 
   if %FORMAT% == ".dll" (
