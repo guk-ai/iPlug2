@@ -137,6 +137,8 @@ if (Skia IN_LIST iPlug2_FIND_COMPONENTS)
     set(sdk "${BUILD_DEPS}/win/${PROCESSOR_ARCH}/$<IF:$<CONFIG:DEBUG>,Debug,Release>")
     iplug_target_add(iPlug2_Skia INTERFACE
       LINK
+        "${sdk}/libpng.lib"
+#        "${sdk}/opengl32.lib"
         "${sdk}/skia.lib"
         "${sdk}/skottie.lib"
         "${sdk}/skparagraph.lib"
