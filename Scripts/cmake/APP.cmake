@@ -128,6 +128,8 @@ macro(iplug_configure_app target)
       RUNTIME_OUTPUT_DIRECTORY "${PLUG_NAME}-app"
     )
     add_custom_command(TARGET ${target} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${plugin_build_dir})
+    add_custom_command(TARGET ${target} POST_BUILD
       COMMAND "${CMAKE_BINARY_DIR}/postbuild-win.bat"
       ARGS "\"$<TARGET_FILE:${target}>\"" "\".exe\""
     )
