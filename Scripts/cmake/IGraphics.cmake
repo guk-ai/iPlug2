@@ -139,7 +139,6 @@ if (Skia IN_LIST iPlug2_FIND_COMPONENTS)
       LINK
         "${sdk}/libpng.lib"
         "${sdk}/zlib.lib"
-        "${sdk}/opengl32.lib"
         "${sdk}/skia.lib"
         "${sdk}/skottie.lib"
         "${sdk}/skparagraph.lib"
