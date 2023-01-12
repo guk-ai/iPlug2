@@ -120,6 +120,9 @@ iplug_source_tree(iPlug2_APP)
 macro(iplug_configure_app target)
   iplug_target_add(${target} PUBLIC LINK iPlug2_APP)
 
+  add_custom_command(TARGET ${target} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${plugin_build_dir})
+
   if (WIN32)
     set(res_dir "${CMAKE_BINARY_DIR}/${PLUG_NAME}-app/resources")
 
@@ -127,8 +130,6 @@ macro(iplug_configure_app target)
       OUTPUT_NAME "${PLUG_NAME}"
       RUNTIME_OUTPUT_DIRECTORY "${PLUG_NAME}-app"
     )
-    add_custom_command(TARGET ${target} POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${plugin_build_dir})
     add_custom_command(TARGET ${target} POST_BUILD
       COMMAND "${CMAKE_BINARY_DIR}/postbuild-win.bat"
       ARGS "\"$<TARGET_FILE:${target}>\"" "\".exe\""
