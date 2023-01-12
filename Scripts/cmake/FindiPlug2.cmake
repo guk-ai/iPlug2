@@ -274,6 +274,7 @@ set(_src
 )
 
 set(plugin_build_dir "${CMAKE_BINARY_DIR}/out")
+file(MAKE_DIRECTORY ${plugin_build_dir})
 
 # Platform Settings
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
